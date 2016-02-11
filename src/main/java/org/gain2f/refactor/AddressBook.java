@@ -1,103 +1,50 @@
 package org.gain2f.refactor;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AddressBook {
 
-    public static final String SWEDEN_CODE = "070";
+  public static final String SWEDEN_CODE = "070";
 
-    public boolean hasMobile(String name) {
-        return new AddressDb().findPerson(name).getPhoneNumber().getNumber().startsWith(SWEDEN_CODE);
-    }
+  private AddressDb addressDb = new AddressDb("admin", "beefhead");
 
-    public static void main(String[] args) {
+  public boolean hasMobile(String name) {
+    return addressDb.findPerson(name).getPhoneNumber().getNumber().startsWith(SWEDEN_CODE);
+  }
 
-    }
+  public int getSize() {
+    return addressDb.getAllPersons().size() - 1;
+    // In original logic method returns size of people collection - 1. Corresponded refactoring task it was saved but looks strange
+    // In the task has written: "...однако общее поведение классов должно остаться прежним."
+  }
 
-    static {
-        System.out.println("start");
-        new Checker().start();
-    }
+  public String getMobile(String name) {
+    PhoneNumber phone = addressDb.findPerson(name).getPhoneNumber();
+    return phone.getNumber();
+  }
 
-    public int getSize() {
-        AddressDb db = new AddressDb();
-        List<Person> people = db.getAll();
-        int count = -1;
-        Iterator<Person> n = people.iterator();
-        while (n.hasNext()) {
-            ++count;
-        }
+  /**
+   * Returns all names in the book truncated to the given length.
+   *
+   * @param maxLength max length of the names
+   * @return all names in the book truncated to the given length
+   */
+  public List<String> getNames(int maxLength) {
+    return addressDb.getAllPersons().parallelStream()
+                    .map(person -> person.getName().length() > maxLength
+                           ? person.getName().substring(0, maxLength)
+                           : person.getName()).collect(Collectors.toList());
+  }
 
-        return people.size() - 1;
-    }
-
-    /**
-     * Gets the given user's mobile phone number,
-     * or null if he doesn't have one.
-     */
-    public String getMobile(String name) {
-        AddressDb db = new AddressDb();
-        db = new AddressDb();
-
-        Person person = db.findPerson(name);
-        PhoneNumber phone = person.getPhoneNumber();
-        db = new AddressDb();
-        return phone.getNumber();
-    }
-
-    /**
-     * Returns all names in the book truncated to the given length.
-     */
-    public List getNames(int maxLength) {
-        AddressDb db = new AddressDb();
-        List<Person> people = db.getAll();
-        List names = new LinkedList<String>();
-        for (Person person : people) {
-            String name = person.getName();
-            if (name.length() > maxLength) {
-                name = name.substring(0, maxLength);
-            }
-            names.add(name);
-        }
-        String oldName = "";
-        oldName = oldName + names;
-        return names;
-
-    }
-
-    /**
-     * Returns all people who have mobile phone numbers.
-     */
-    public List getList() {
-        AddressDb db = new AddressDb();
-        List people = db.getAll();
-        Collection f = new LinkedList();
-        for (Object person : people) {
-            if (((Person) person).getPhoneNumber().getNumber().startsWith("070")) {
-                if (people != null) {
-                    f.add(person);
-                }
-            }
-        }
-        return (LinkedList) f;
-    }
-
-    static class Checker extends Thread {
-        long time = System.currentTimeMillis();
-
-        public void run() {
-            while (System.currentTimeMillis() < time) {
-                new AddressBook().getList();
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                }
-            }
-
-        }
-    }
-
+  /**
+   * Returns all people who have mobile phone numbers.
+   *
+   * @return all people who have mobile phone numbers
+   */
+  public List getPeopleWithPhone() {
+    return addressDb.getAllPersons().parallelStream()
+                    .filter(person -> person.getPhoneNumber().getNumber().startsWith(SWEDEN_CODE))
+                    .collect(Collectors.toList());
+  }
 }

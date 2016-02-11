@@ -1,30 +1,55 @@
 package org.gain2f.refactor;
 
-import java.util.Date;
-
 public class Person {
-	private String NAME;
-	private PhoneNumber phoneNumber;
-	private Date date;
-	
-	public Person(String name, PhoneNumber phoneNumber) {
-		this.NAME = name;
-	}
 
-	public String getName() {
-		return NAME;
-	}
+  private String      name;
+  private PhoneNumber phoneNumber;
 
-	public void setName(String name) {
-		name = name;
-	}
+  public Person(String name, PhoneNumber phoneNumber) {
+    this.name = name;
+    this.phoneNumber = phoneNumber;
+  }
 
-	public PhoneNumber getPhoneNumber() {
-		return phoneNumber;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public void setPhoneNumber(PhoneNumber phoneNumber) {
-		this.phoneNumber = phoneNumber;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
 
+  public PhoneNumber getPhoneNumber() {
+    return phoneNumber;
+  }
+
+  public void setPhoneNumber(PhoneNumber phoneNumber) {
+    this.phoneNumber = phoneNumber;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Person person = (Person) o;
+
+    if (name != null ? !name.equals(person.name) : person.name != null) return false;
+    return !(phoneNumber != null ? !phoneNumber.equals(person.phoneNumber) : person.phoneNumber != null);
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (phoneNumber != null ? phoneNumber.hashCode() : 0);
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return "Person{" +
+           "name='" + name + '\'' +
+           ", phoneNumber=" + phoneNumber +
+           '}';
+  }
 }
