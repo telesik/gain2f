@@ -2,9 +2,11 @@ package org.gain2f.cachemap;
 
 import junit.framework.TestCase;
 
+import java.util.Iterator;
+
 /**
  * JUnit test case for a CacheMap implementation.
- * <p/>
+ * <p>
  * Feel free to add more methods.
  */
 public class CacheMap_UnitTest extends TestCase {
@@ -94,6 +96,52 @@ public class CacheMap_UnitTest extends TestCase {
         assertFalse(cache.containsValue("orange"));
 
 
+    }
+
+    public void testExpiringElementAfterTTLReducing() {
+        cache.setTimeToLive(2000);
+        Clock.setTime(1000);
+        cache.put(1, "a");
+        cache.put(2, "b");
+        Clock.setTime(2100);
+        cache.put(3, "c");
+        cache.put(4, "d");
+        assertEquals(cache.size(), 4);
+
+        assertTrue(cache.containsKey(1)); // still alive element
+        assertTrue(cache.containsKey(2)); // still alive element
+        assertTrue(cache.containsValue("a")); // still alive element
+        assertTrue(cache.containsValue("b")); // still alive element
+        assertTrue(cache.containsKey(3)); // still alive element
+        assertTrue(cache.containsKey(4)); // still alive element
+        assertTrue(cache.containsValue("c")); // still alive element
+        assertTrue(cache.containsValue("d")); // still alive element
+
+        cache.setTimeToLive(1000);
+        assertFalse(cache.containsKey(1)); // expired element
+        assertFalse(cache.containsKey(2)); // expired element
+        assertFalse(cache.containsValue("a")); // expired element
+        assertFalse(cache.containsValue("b")); // expired element
+        assertTrue(cache.containsKey(3)); // still alive element
+        assertTrue(cache.containsKey(4)); // still alive element
+        assertTrue(cache.containsValue("c")); // still alive element
+        assertTrue(cache.containsValue("d")); // still alive element
+        assertEquals(cache.size(), 2);
+    }
+
+    public void testPuttingOrderControl() {
+        CacheMapImpl<Integer, String> _cache = new CacheMapImpl<>();
+        _cache.setTimeToLive(1000);
+        _cache.put(1, "a");
+        _cache.put(2, "b");
+        _cache.put(3, "c");
+        _cache.put(4, "d");
+        _cache.put(2, "e");
+        Iterator<Integer> iterator = _cache.map.keySet().iterator();
+        assertEquals(iterator.next(), Integer.valueOf(1));
+        assertEquals(iterator.next(), Integer.valueOf(3));
+        assertEquals(iterator.next(), Integer.valueOf(4));
+        assertEquals(iterator.next(), Integer.valueOf(2));
     }
 
 }

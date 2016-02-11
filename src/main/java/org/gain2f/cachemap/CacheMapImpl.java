@@ -11,7 +11,7 @@ import java.util.Map;
  */
 public class CacheMapImpl<KeyType, ValueType> implements CacheMap<KeyType, ValueType> {
     private volatile long timeToLive;
-    private LinkedHashMap<KeyType, WrappedValue> map = new LinkedHashMap<>();
+    LinkedHashMap<KeyType, WrappedValue> map = new LinkedHashMap<>();
 
     private class WrappedValue {
         //        transient Instant fixedTime;
@@ -47,6 +47,14 @@ public class CacheMapImpl<KeyType, ValueType> implements CacheMap<KeyType, Value
         public boolean valueEquals(Object value) {
             return this.value != null && this.value.equals(value);
         }
+
+        @Override
+        public String toString() {
+            return "WrappedValue{" +
+                    "fixedTime=" + fixedTime +
+                    ", value=" + value +
+                    '}';
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -64,7 +72,8 @@ public class CacheMapImpl<KeyType, ValueType> implements CacheMap<KeyType, Value
     }
 
     public ValueType put(KeyType key, ValueType value) {
-        WrappedValue wrappedValue = map.put(key, wrap(value));
+        WrappedValue wrappedValue = map.remove(key);
+        map.put(key, wrap(value));
         return extractValue(wrappedValue);
     }
 
