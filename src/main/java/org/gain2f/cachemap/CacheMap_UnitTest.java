@@ -8,7 +8,7 @@ import junit.framework.TestCase;
  * Feel free to add more methods.
  */
 public class CacheMap_UnitTest extends TestCase {
-    CacheMap<Integer, String> cache;
+    CacheMap<Integer, String> cache = new CacheMapImpl<>();
     final static long TIME_TO_LIVE = 1000;
 
     public void setUp() throws Exception {
