@@ -1,11 +1,10 @@
 package org.gain2f.cachemap;
 
-import java.time.Duration;
-import java.time.Instant;
+import org.gain2f.cachemap.exceptions.CacheMapException;
+
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Predicate;
 
 /**
  * Created by Kiselov on 2/11/2016.
@@ -15,21 +14,19 @@ public class CacheMapImpl<KeyType, ValueType> implements CacheMap<KeyType, Value
     private LinkedHashMap<KeyType, WrappedValue> map = new LinkedHashMap<>();
 
     private class WrappedValue {
-        transient Instant fixedTime;
+        //        transient Instant fixedTime;
+        transient long fixedTime;
         ValueType value;
 
         private WrappedValue(ValueType value) {
             this.value = value;
-            //this.fixedTime = Instant.now();
-        }
-
-        WrappedValue fixTime() {
-            this.fixedTime = Instant.now();
-            return this;
+//            this.fixedTime = Instant.now();
+            this.fixedTime = Clock.getTime();
         }
 
         boolean isExpired() {
-            return Duration.between(Instant.now(), fixedTime).toMillis() - timeToLive > 0;
+//            return timeToLive - Duration.between(fixedTime, Instant.now()).toMillis() < 0;
+            return timeToLive - Clock.getTime() + fixedTime < 0;
         }
 
         @Override
@@ -39,13 +36,16 @@ public class CacheMapImpl<KeyType, ValueType> implements CacheMap<KeyType, Value
 
             WrappedValue that = (WrappedValue) o;
 
-            return value != null ? value.equals(that.value) : that.value == null;
-
+            return valueEquals(that.value);
         }
 
         @Override
         public int hashCode() {
             return value != null ? value.hashCode() : 0;
+        }
+
+        public boolean valueEquals(Object value) {
+            return this.value != null && this.value.equals(value);
         }
     }
 
@@ -55,6 +55,7 @@ public class CacheMapImpl<KeyType, ValueType> implements CacheMap<KeyType, Value
     }
 
     public void setTimeToLive(long timeToLive) {
+        if (timeToLive < 0) throw new CacheMapException("Time to live could not be less than zero");
         this.timeToLive = timeToLive;
     }
 
@@ -63,15 +64,14 @@ public class CacheMapImpl<KeyType, ValueType> implements CacheMap<KeyType, Value
     }
 
     public ValueType put(KeyType key, ValueType value) {
-        return map.put(key, wrap(value).fixTime()).value;
+        WrappedValue wrappedValue = map.put(key, wrap(value));
+        return extractValue(wrappedValue);
     }
 
-    public CacheMap<KeyType, ValueType> _clearExpired() {
+    public CacheMapImpl<KeyType, ValueType> _clearExpired() {
         Iterator<Map.Entry<KeyType, WrappedValue>> iterator = map.entrySet().iterator();
-        while (iterator.hasNext()) {
-            if (iterator.next().getValue().isExpired()) {
-                iterator.remove();
-            }
+        while (iterator.hasNext() && iterator.next().getValue().isExpired()) {
+            iterator.remove();
         }
         return this;
     }
@@ -101,18 +101,7 @@ public class CacheMapImpl<KeyType, ValueType> implements CacheMap<KeyType, Value
     }
 
     public boolean containsValue(final Object value) {
-        Iterator<WrappedValue> iterator = map.values().stream().filter(new Predicate<WrappedValue>() {
-            @Override
-            public boolean test(WrappedValue valueWrapper) {
-                return valueWrapper.equals(value);
-            }
-        }).iterator();
-
-        while (iterator.hasNext()) {
-            if (!iterator.next().isExpired()) return true;
-            iterator.remove();
-        }
-        return false;
+        return _clearExpired().map.values().stream().filter(valueWrapper -> valueWrapper.valueEquals(value)).findAny().isPresent();
     }
 
     public ValueType get(Object key) {
@@ -121,15 +110,21 @@ public class CacheMapImpl<KeyType, ValueType> implements CacheMap<KeyType, Value
     }
 
     public boolean isEmpty() {
-        return map.isEmpty();
+        return _clearExpired().map.isEmpty();
     }
 
     public ValueType remove(Object key) {
         WrappedValue wrappedValue = map.remove(key);
-        return wrappedValue != null ? wrappedValue.value : null;
+        return extractValue(wrappedValue);
+    }
+
+    private ValueType extractValue(WrappedValue wrappedValue) {
+        return wrappedValue != null
+                ? wrappedValue.isExpired() ? null : wrappedValue.value
+                : null;
     }
 
     public int size() {
-        return map.size();
+        return _clearExpired().map.size();
     }
 }

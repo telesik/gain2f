@@ -8,7 +8,7 @@ public class Clock {
 	private static Long time;
 	
 	/**
-	 * Returns the system time if no time has been explicitely 
+	 * Returns the system time if no time has been explicitly
 	 * set using setTime(...)
 	 */
 	public static long getTime() {
