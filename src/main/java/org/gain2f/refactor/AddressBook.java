@@ -31,7 +31,7 @@ public class AddressBook {
    * @return all names in the book truncated to the given length
    */
   public List<String> getNames(int maxLength) {
-    return addressDb.getAllPersons().parallelStream()
+    return addressDb.getAllPersons().stream()
                     .map(person -> person.getName().length() > maxLength
                            ? person.getName().substring(0, maxLength)
                            : person.getName()).collect(Collectors.toList());
@@ -43,7 +43,7 @@ public class AddressBook {
    * @return all people who have mobile phone numbers
    */
   public List getPeopleWithPhone() {
-    return addressDb.getAllPersons().parallelStream()
+    return addressDb.getAllPersons().stream()
                     .filter(person -> person.getPhoneNumber().getNumber().startsWith(SWEDEN_CODE))
                     .collect(Collectors.toList());
   }
